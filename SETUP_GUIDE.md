@@ -56,3 +56,4 @@ git push -u origin main
 ARISE is live on your phone + laptop, synced to Supabase cloud.
 
 
+
