@@ -93,3 +93,4 @@ export const pomodoroAPI = {
   getHistory: () => mockData([]),
   logSession: (_, workMinutes) => mockData({ id: Date.now().toString(), work_minutes: workMinutes }),
 };
+
