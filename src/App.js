@@ -86,8 +86,8 @@ const I = ({ n, s = 20, c, sw = 1.5 }) => {
 };
 
 // ─── SHARED UI ────────────────────────────────────────────────────────────────
-const Card = ({ children, style = {}, t, sh }) => (
-  <div style={{ background: t.card, borderRadius: 24, boxShadow: sh.card, padding: 20, ...style }}>{children}</div>
+const Card = ({ children, style = {}, t, sh, ...props }) => (
+  <div style={{ background: t.card, borderRadius: 24, boxShadow: sh.card, padding: 20, ...style }} {...props}>{children}</div>
 );
 const Pill = ({ children, active, onClick, t, sh, style = {} }) => (
   <button onClick={onClick} style={{ padding: "8px 18px", border: "none", cursor: "pointer", whiteSpace: "nowrap", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", background: active ? t.accent : t.card, color: active ? t.bg : t.grey, borderRadius: 50, boxShadow: active ? sh.btn : sh.card, transition: "all 0.2s ease", ...style }}>{children}</button>
