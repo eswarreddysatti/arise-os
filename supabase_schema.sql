@@ -15,7 +15,13 @@ create table if not exists subtasks (
   id uuid primary key default uuid_generate_v4(),
   task_id uuid references tasks(id) on delete cascade not null,
   user_id uuid references auth.users(id) on delete cascade not null,
-  title text not null, done boolean default false, created_at timestamptz default now()
+  title text not null,
+  description text default '',
+  due_date timestamptz,
+  priority text default 'medium',
+  assignee_id uuid references auth.users(id) on delete set null,
+  done boolean default false,
+  created_at timestamptz default now()
 );
 create table if not exists habits (
   id uuid primary key default uuid_generate_v4(),

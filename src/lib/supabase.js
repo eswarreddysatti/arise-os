@@ -30,7 +30,17 @@ export const tasksAPI = {
   add: (_, task) => mockData({ id: Date.now().toString(), ...task }),
   update: (id, data) => mockData({ id, ...data }),
   delete: () => mockData(null),
-  addSubtask: (_, taskId, title) => mockData({ id: Date.now().toString(), task_id: taskId, title, done: false }),
+  addSubtask: (_, taskId, title) => mockData({
+    id: Date.now().toString(),
+    task_id: taskId,
+    title,
+    description: '',
+    due_date: null,
+    priority: 'medium',
+    assignee_id: null,
+    done: false
+  }),
+  updateSubtask: (id, data) => mockData({ id, ...data }),
   toggleSubtask: () => mockData(null),
   deleteSubtask: () => mockData(null),
 };
