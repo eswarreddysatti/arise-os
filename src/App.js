@@ -33,7 +33,7 @@ const GS = (t) => `
   @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
   @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-  .page{animation:fadeUp 0.35s ease forwards;}
+  .page{opacity:1;}
   .spin{animation:spin 1s linear infinite;}
 `;
 
@@ -338,7 +338,7 @@ const SubtaskEditor = ({ task, sub, onSave, t, sh, prioColor }) => {
 
   useEffect(() => {
     setLocalSub(sub);
-  }, [sub.id]);
+  }, [sub.id, sub.description, sub.due_date, sub.priority, sub.assignee_id]);
 
   const handleChange = (updates) => {
     const updated = { ...localSub, ...updates };
