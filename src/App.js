@@ -339,6 +339,7 @@ const TasksPage = ({ t, sh, tasks, setTasks, userId, onToast }) => {
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
   const [expanded, setExpanded] = useState(null);
+  const [expandedSub, setExpandedSub] = useState(null);
   const [form, setForm] = useState({ title: "", category: "Personal", priority: "medium", due_date: "", notes: "", subtasks: [] });
   const [newSub, setNewSub] = useState("");
   const cats = ["All", "Work", "Personal", "Health", "Other"];
@@ -360,8 +361,13 @@ const TasksPage = ({ t, sh, tasks, setTasks, userId, onToast }) => {
 
   const toggleSub = async (taskId, sub) => {
     const done = !sub.done;
-    await tasksAPI.toggleSubtask(sub.id, done);
+    await tasksAPI.updateSubtask(sub.id, { done });
     setTasks(tasks.map(t2 => t2.id === taskId ? { ...t2, subtasks: (t2.subtasks || []).map(s => s.id === sub.id ? { ...s, done } : s) } : t2));
+  };
+
+  const saveSubDetails = async (taskId, subId, data) => {
+    await tasksAPI.updateSubtask(subId, data);
+    setTasks(tasks.map(t2 => t2.id === taskId ? { ...t2, subtasks: (t2.subtasks || []).map(s => s.id === subId ? { ...s, ...data } : s) } : t2));
   };
 
   const addTask = async () => {
@@ -385,7 +391,7 @@ const TasksPage = ({ t, sh, tasks, setTasks, userId, onToast }) => {
 
   const addSubLocal = () => {
     if (!newSub.trim()) return;
-    setForm({ ...form, subtasks: [...form.subtasks, { id: Date.now(), title: newSub, done: false }] });
+    setForm({ ...form, subtasks: [...form.subtasks, { id: Date.now(), title: newSub, done: false, description: '', due_date: null, priority: 'medium' }] });
     setNewSub("");
   };
 
@@ -411,14 +417,50 @@ const TasksPage = ({ t, sh, tasks, setTasks, userId, onToast }) => {
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: prioColor[task.priority] || t.grey }} />
               <IconBtn icon="trash" onClick={() => del(task.id)} t={t} sh={sh} size={30} />
             </div>
-            {expanded === task.id && (task.subtasks || []).length > 0 && (
-              <div style={{ marginTop: 12, paddingLeft: 44 }}>
-                {(task.subtasks || []).map(s => (
-                  <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
-                    <CheckBtn checked={s.done} onToggle={() => toggleSub(task.id, s)} t={t} sh={sh} size={22} />
-                    <span style={{ fontSize: 13, color: t.grey, textDecoration: s.done ? "line-through" : "none" }}>{s.title}</span>
-                  </div>
-                ))}
+            {expanded === task.id && (
+              <div style={{ marginTop: 12, paddingLeft: 12 }}>
+                {(task.subtasks || []).map(s => {
+                  const isSubExp = expandedSub === s.id;
+                  return (
+                    <div key={s.id} style={{ marginBottom: 8, padding: isSubExp ? "12px 14px" : "4px 0", borderRadius: 12, background: isSubExp ? t.bg : "transparent", boxShadow: isSubExp ? sh.inset : "none" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <CheckBtn checked={s.done} onToggle={() => toggleSub(task.id, s)} t={t} sh={sh} size={22} />
+                        <div style={{ flex: 1, cursor: "pointer" }} onClick={() => setExpandedSub(isSubExp ? null : s.id)}>
+                          <span style={{ fontSize: 13, color: t.black, fontWeight: 600, textDecoration: s.done ? "line-through" : "none" }}>{s.title}</span>
+                          {!isSubExp && (
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                              <div style={{ width: 6, height: 6, borderRadius: "50%", background: prioColor[s.priority || 'medium'] }} />
+                              {s.due_date && <span style={{ fontSize: 10, color: t.grey }}>{new Date(s.due_date).toLocaleDateString()}</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {isSubExp && (
+                        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                          <NeuTextarea t={t} sh={sh} placeholder="Description..." value={s.description || ''} onChange={e => saveSubDetails(task.id, s.id, { description: e.target.value })} style={{ fontSize: 12 }} />
+                          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: 10, color: t.grey, marginBottom: 4, fontWeight: 700 }}>DUE DATE</p>
+                              <NeuInput type="date" t={t} sh={sh} value={s.due_date ? new Date(s.due_date).toISOString().split('T')[0] : ''} onChange={e => saveSubDetails(task.id, s.id, { due_date: e.target.value })} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: 10, color: t.grey, marginBottom: 4, fontWeight: 700 }}>PRIORITY</p>
+                              <div style={{ display: "flex", gap: 4 }}>
+                                {["low", "medium", "high"].map(p => (
+                                  <button key={p} onClick={() => saveSubDetails(task.id, s.id, { priority: p })} style={{ flex: 1, padding: "6px 0", border: "none", borderRadius: 8, fontSize: 9, fontWeight: 800, textTransform: "uppercase", background: s.priority === p ? prioColor[p] : t.card, color: s.priority === p ? "white" : t.grey, boxShadow: sh.card }}>{p[0]}</button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: 10, color: t.grey, marginBottom: 4, fontWeight: 700 }}>ASSIGNEE</p>
+                            <NeuInput t={t} sh={sh} placeholder="Assignee ID..." value={s.assignee_id || ''} onChange={e => saveSubDetails(task.id, s.id, { assignee_id: e.target.value })} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
             {expanded === task.id && task.notes && (
