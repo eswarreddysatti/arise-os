@@ -333,6 +333,78 @@ const HomePage = ({ t, sh, tasks, habits, reminders, goals, profile, setPage }) 
   );
 };
 
+const SubtaskEditor = ({ task, sub, onSave, t, sh, prioColor }) => {
+  const [localSub, setLocalSub] = useState(sub);
+
+  useEffect(() => {
+    setLocalSub(sub);
+  }, [sub.id]);
+
+  const handleChange = (updates) => {
+    const updated = { ...localSub, ...updates };
+    setLocalSub(updated);
+    onSave(task.id, sub.id, updates);
+  };
+
+  const formatDateForInput = (date) => {
+    if (!date) return "";
+    try {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return "";
+      return d.toISOString().split('T')[0];
+    } catch (e) {
+      return "";
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+      <NeuTextarea
+        t={t} sh={sh}
+        placeholder="Description..."
+        value={localSub.description || ''}
+        onChange={e => setLocalSub({ ...localSub, description: e.target.value })}
+        onBlur={e => onSave(task.id, sub.id, { description: e.target.value })}
+        style={{ fontSize: 12 }}
+      />
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 10, color: t.grey, marginBottom: 4, fontWeight: 700 }}>DUE DATE</p>
+          <NeuInput
+            type="date" t={t} sh={sh}
+            value={formatDateForInput(localSub.due_date)}
+            onChange={e => handleChange({ due_date: e.target.value })}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 10, color: t.grey, marginBottom: 4, fontWeight: 700 }}>PRIORITY</p>
+          <div style={{ display: "flex", gap: 4 }}>
+            {["low", "medium", "high"].map(p => (
+              <button
+                key={p}
+                onClick={() => handleChange({ priority: p })}
+                style={{ flex: 1, padding: "6px 0", border: "none", borderRadius: 8, fontSize: 9, fontWeight: 800, textTransform: "uppercase", background: localSub.priority === p ? prioColor[p] : t.card, color: localSub.priority === p ? "white" : t.grey, boxShadow: sh.card }}
+              >
+                {p[0]}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div>
+        <p style={{ fontSize: 10, color: t.grey, marginBottom: 4, fontWeight: 700 }}>ASSIGNEE</p>
+        <NeuInput
+          t={t} sh={sh}
+          placeholder="Assignee ID..."
+          value={localSub.assignee_id || ''}
+          onChange={e => setLocalSub({ ...localSub, assignee_id: e.target.value })}
+          onBlur={e => onSave(task.id, sub.id, { assignee_id: e.target.value })}
+        />
+      </div>
+    </div>
+  );
+};
+
 // ─── TASKS ────────────────────────────────────────────────────────────────────
 const TasksPage = ({ t, sh, tasks, setTasks, userId, onToast }) => {
   const [filter, setFilter] = useState("All");
@@ -436,27 +508,14 @@ const TasksPage = ({ t, sh, tasks, setTasks, userId, onToast }) => {
                         </div>
                       </div>
                       {isSubExp && (
-                        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-                          <NeuTextarea t={t} sh={sh} placeholder="Description..." value={s.description || ''} onChange={e => saveSubDetails(task.id, s.id, { description: e.target.value })} style={{ fontSize: 12 }} />
-                          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            <div style={{ flex: 1 }}>
-                              <p style={{ fontSize: 10, color: t.grey, marginBottom: 4, fontWeight: 700 }}>DUE DATE</p>
-                              <NeuInput type="date" t={t} sh={sh} value={s.due_date ? new Date(s.due_date).toISOString().split('T')[0] : ''} onChange={e => saveSubDetails(task.id, s.id, { due_date: e.target.value })} />
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <p style={{ fontSize: 10, color: t.grey, marginBottom: 4, fontWeight: 700 }}>PRIORITY</p>
-                              <div style={{ display: "flex", gap: 4 }}>
-                                {["low", "medium", "high"].map(p => (
-                                  <button key={p} onClick={() => saveSubDetails(task.id, s.id, { priority: p })} style={{ flex: 1, padding: "6px 0", border: "none", borderRadius: 8, fontSize: 9, fontWeight: 800, textTransform: "uppercase", background: s.priority === p ? prioColor[p] : t.card, color: s.priority === p ? "white" : t.grey, boxShadow: sh.card }}>{p[0]}</button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          <div>
-                            <p style={{ fontSize: 10, color: t.grey, marginBottom: 4, fontWeight: 700 }}>ASSIGNEE</p>
-                            <NeuInput t={t} sh={sh} placeholder="Assignee ID..." value={s.assignee_id || ''} onChange={e => saveSubDetails(task.id, s.id, { assignee_id: e.target.value })} />
-                          </div>
-                        </div>
+                        <SubtaskEditor
+                          task={task}
+                          sub={s}
+                          onSave={saveSubDetails}
+                          t={t}
+                          sh={sh}
+                          prioColor={prioColor}
+                        />
                       )}
                     </div>
                   );
