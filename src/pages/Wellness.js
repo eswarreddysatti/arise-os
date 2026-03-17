@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, SectionLabel, BigNumber, ActionBtn, IconBtn, Segment, NeuInput, NeuTextarea } from '../components/SharedUI';
 import { I } from '../components/Icons';
 import { wellnessAPI, profileAPI } from '../lib/supabase';
@@ -19,6 +19,17 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
       setShowSetup(true);
     }
   }, [profile]);
+
+  const updateWellness = useCallback(async (updates) => {
+    if (!userId) return;
+    const { data, error } = await wellnessAPI.update(userId, today, updates);
+    if (!error && data) {
+      setWellness(data);
+      if (updates.steps) setStepCount(updates.steps);
+    } else {
+      onToast("Sync error");
+    }
+  }, [userId, today, setWellness, onToast]);
 
   // Step Detection Logic
   const [isTracking, setIsTracking] = useState(false);
@@ -53,17 +64,6 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
     }
     return () => window.removeEventListener('devicemotion', handleMotion);
   }, [isTracking, updateWellness]);
-
-  const updateWellness = useCallback(async (updates) => {
-    if (!userId) return;
-    const { data, error } = await wellnessAPI.update(userId, today, updates);
-    if (!error && data) {
-      setWellness(data);
-      if (updates.steps) setStepCount(updates.steps);
-    } else {
-      onToast("Sync error");
-    }
-  }, [userId, today, setWellness, onToast]);
 
   const saveSetup = async () => {
     if (!userId) return;
