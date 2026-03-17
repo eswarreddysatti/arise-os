@@ -80,8 +80,12 @@ export const focusAPI = {
 
 // Wellness
 export const wellnessAPI = {
-  getToday: async (uid, date) => IS_MOCK ? mockData(localMockWellness) : supabase.from('wellness_logs').select('*').eq('user_id', uid).eq('log_date', date).single(),
-  update: async (uid, date, data) => IS_MOCK ? mockUpdateWellness(data) : supabase.from('wellness_logs').upsert({ user_id: uid, log_date: date, ...data }).select().single(),
+  getToday: async (uid, date) => {
+    if (IS_MOCK) return mockData(localMockWellness);
+    const { data, error } = await supabase.from('wellness_logs').select('*').eq('user_id', uid).eq('log_date', date).maybeSingle();
+    return { data: data || {}, error: (error && error.code !== 'PGRST116') ? error : null };
+  },
+  update: async (uid, date, data) => IS_MOCK ? mockUpdateWellness(data) : supabase.from('wellness_logs').upsert({ user_id: uid, log_date: date, ...data }, { onConflict: 'user_id,log_date' }).select().single(),
 };
 
 // Notes
