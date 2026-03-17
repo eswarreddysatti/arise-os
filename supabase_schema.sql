@@ -192,18 +192,43 @@ alter table calendar_events   enable row level security;
 alter table reminders         enable row level security;
 
 -- POLICIES
+drop policy if exists "own_tasks" on tasks;
 create policy "own_tasks"            on tasks             for all using (auth.uid()=user_id);
+
+drop policy if exists "own_subtasks" on subtasks;
 create policy "own_subtasks"         on subtasks          for all using (auth.uid()=user_id);
+
+drop policy if exists "own_habits" on habits;
 create policy "own_habits"           on habits            for all using (auth.uid()=user_id);
+
+drop policy if exists "own_habit_logs" on habit_logs;
 create policy "own_habit_logs"       on habit_logs        for all using (auth.uid()=user_id);
+
+drop policy if exists "own_focus_sessions" on focus_sessions;
 create policy "own_focus_sessions"   on focus_sessions    for all using (auth.uid()=user_id);
+
+drop policy if exists "own_notes" on notes;
 create policy "own_notes"            on notes             for all using (auth.uid()=user_id);
+
+drop policy if exists "own_goals" on goals;
 create policy "own_goals"            on goals             for all using (auth.uid()=user_id);
+
+drop policy if exists "own_finance_entries" on finance_entries;
 create policy "own_finance_entries"  on finance_entries   for all using (auth.uid()=user_id);
+
+drop policy if exists "own_wellness_logs" on wellness_logs;
 create policy "own_wellness_logs"    on wellness_logs     for all using (auth.uid()=user_id);
+
+drop policy if exists "own_journal_entries" on journal_entries;
 create policy "own_journal_entries"  on journal_entries   for all using (auth.uid()=user_id);
+
+drop policy if exists "own_calendar_events" on calendar_events;
 create policy "own_calendar_events"  on calendar_events   for all using (auth.uid()=user_id);
+
+drop policy if exists "own_reminders" on reminders;
 create policy "own_reminders"        on reminders         for all using (auth.uid()=user_id);
+
+drop policy if exists "own_profile" on profiles;
 create policy "own_profile"          on profiles          for all using (auth.uid()=id);
 
 -- TRIGGER: Auto-create profile on signup
@@ -231,6 +256,3 @@ create trigger t_wellness before update on wellness_logs for each row execute pr
 create trigger t_journal before update on journal_entries for each row execute procedure update_updated_at();
 create trigger t_reminders before update on reminders for each row execute procedure update_updated_at();
 create trigger t_profiles before update on profiles for each row execute procedure update_updated_at();
-
-
-

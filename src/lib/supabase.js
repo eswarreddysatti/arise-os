@@ -96,3 +96,11 @@ export const remindersAPI = {
   update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('reminders').update(data).eq('id', id).select().single(),
   delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('reminders').delete().eq('id', id),
 };
+// Subscriptions helper
+export const subscribe = (table, callback) => {
+  if (IS_MOCK) return { unsubscribe: () => {} };
+  return supabase
+    .channel(`${table}-changes`)
+    .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => callback(payload))
+    .subscribe();
+};
