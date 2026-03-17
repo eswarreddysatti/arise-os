@@ -88,11 +88,11 @@ export const calendarAPI = {
   add: async (uid, event) => IS_MOCK ? mockData({ id: Date.now().toString(), ...event }) : supabase.from('calendar_events').insert([{ ...event, user_id: uid }]).select().single(),
   delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('calendar_events').delete().eq('id', id),
 };
-// Subscriptions helper
-export const subscribe = (table, callback) => {
-  if (IS_MOCK) return { unsubscribe: () => {} };
-  return supabase
-    .channel(`${table}-changes`)
-    .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => callback(payload))
-    .subscribe();
+
+// Reminders
+export const remindersAPI = {
+  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('reminders').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+  add: async (uid, reminder) => IS_MOCK ? mockData({ id: Date.now().toString(), ...reminder }) : supabase.from('reminders').insert([{ ...reminder, user_id: uid }]).select().single(),
+  update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('reminders').update(data).eq('id', id).select().single(),
+  delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('reminders').delete().eq('id', id),
 };

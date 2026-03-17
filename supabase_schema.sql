@@ -154,6 +154,16 @@ create table if not exists calendar_events (
   created_at timestamptz default now()
 );
 
+-- REMINDERS
+create table if not exists reminders (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text not null,
+  done boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- PERFORMANCE INDEXES
 create index idx_tasks_user_date on tasks(user_id, due_date);
 create index idx_subtasks_task on subtasks(task_id);
@@ -164,6 +174,7 @@ create index idx_wellness_logs_date on wellness_logs(user_id, log_date);
 create index idx_notes_user on notes(user_id);
 create index idx_journal_user_date on journal_entries(user_id, entry_date);
 create index idx_calendar_user_date on calendar_events(user_id, event_date);
+create index idx_reminders_user on reminders(user_id);
 
 -- ROW LEVEL SECURITY (RLS)
 alter table tasks             enable row level security;
@@ -178,6 +189,7 @@ alter table wellness_logs     enable row level security;
 alter table journal_entries   enable row level security;
 alter table profiles          enable row level security;
 alter table calendar_events   enable row level security;
+alter table reminders         enable row level security;
 
 -- POLICIES
 create policy "own_tasks"            on tasks             for all using (auth.uid()=user_id);
@@ -191,6 +203,7 @@ create policy "own_finance_entries"  on finance_entries   for all using (auth.ui
 create policy "own_wellness_logs"    on wellness_logs     for all using (auth.uid()=user_id);
 create policy "own_journal_entries"  on journal_entries   for all using (auth.uid()=user_id);
 create policy "own_calendar_events"  on calendar_events   for all using (auth.uid()=user_id);
+create policy "own_reminders"        on reminders         for all using (auth.uid()=user_id);
 create policy "own_profile"          on profiles          for all using (auth.uid()=id);
 
 -- TRIGGER: Auto-create profile on signup
@@ -216,6 +229,7 @@ create trigger t_notes before update on notes for each row execute procedure upd
 create trigger t_goals before update on goals for each row execute procedure update_updated_at();
 create trigger t_wellness before update on wellness_logs for each row execute procedure update_updated_at();
 create trigger t_journal before update on journal_entries for each row execute procedure update_updated_at();
+create trigger t_reminders before update on reminders for each row execute procedure update_updated_at();
 create trigger t_profiles before update on profiles for each row execute procedure update_updated_at();
 
 
