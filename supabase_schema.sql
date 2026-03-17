@@ -172,15 +172,34 @@ create table if not exists reminders (
 );
 
 -- PERFORMANCE INDEXES
+drop index if exists idx_tasks_user_date;
 create index idx_tasks_user_date on tasks(user_id, due_date);
+
+drop index if exists idx_subtasks_task;
 create index idx_subtasks_task on subtasks(task_id);
+
+drop index if exists idx_habits_user;
 create index idx_habits_user on habits(user_id);
+
+drop index if exists idx_habit_logs_date;
 create index idx_habit_logs_date on habit_logs(user_id, log_date);
+
+drop index if exists idx_focus_sessions_user;
 create index idx_focus_sessions_user on focus_sessions(user_id, start_time);
+
+drop index if exists idx_wellness_logs_date;
 create index idx_wellness_logs_date on wellness_logs(user_id, log_date);
+
+drop index if exists idx_notes_user;
 create index idx_notes_user on notes(user_id);
+
+drop index if exists idx_journal_user_date;
 create index idx_journal_user_date on journal_entries(user_id, entry_date);
+
+drop index if exists idx_calendar_user_date;
 create index idx_calendar_user_date on calendar_events(user_id, event_date);
+
+drop index if exists idx_reminders_user;
 create index idx_reminders_user on reminders(user_id);
 
 -- ROW LEVEL SECURITY (RLS)
