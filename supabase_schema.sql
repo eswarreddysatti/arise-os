@@ -68,6 +68,13 @@ create table if not exists focus_sessions (
   created_at timestamptz default now()
 );
 
+create table if not exists pomodoro_sessions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  work_minutes integer not null,
+  completed_at timestamptz default now()
+);
+
 -- WELLNESS SYSTEM
 create table if not exists wellness_logs (
   id uuid primary key default uuid_generate_v4(),
@@ -132,6 +139,15 @@ create table if not exists finance_entries (
   category text default 'Other', 
   entry_date date default current_date, 
   created_at timestamptz default now()
+);
+
+create table if not exists savings_goals (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  label text default 'Migration Savings',
+  target numeric(12,2) default 620000,
+  saved numeric(12,2) default 0,
+  updated_at timestamptz default now()
 );
 
 -- PROFILES & APP BRANDING
@@ -208,9 +224,11 @@ alter table subtasks          enable row level security;
 alter table habits            enable row level security;
 alter table habit_logs        enable row level security;
 alter table focus_sessions    enable row level security;
+alter table pomodoro_sessions enable row level security;
 alter table notes             enable row level security;
 alter table goals             enable row level security;
 alter table finance_entries   enable row level security;
+alter table savings_goals     enable row level security;
 alter table wellness_logs     enable row level security;
 alter table journal_entries   enable row level security;
 alter table profiles          enable row level security;
@@ -233,6 +251,9 @@ create policy "own_habit_logs"       on habit_logs        for all using (auth.ui
 drop policy if exists "own_focus_sessions" on focus_sessions;
 create policy "own_focus_sessions"   on focus_sessions    for all using (auth.uid()=user_id);
 
+drop policy if exists "own_pomodoro_sessions" on pomodoro_sessions;
+create policy "own_pomodoro_sessions" on pomodoro_sessions for all using (auth.uid()=user_id);
+
 drop policy if exists "own_notes" on notes;
 create policy "own_notes"            on notes             for all using (auth.uid()=user_id);
 
@@ -241,6 +262,9 @@ create policy "own_goals"            on goals             for all using (auth.ui
 
 drop policy if exists "own_finance_entries" on finance_entries;
 create policy "own_finance_entries"  on finance_entries   for all using (auth.uid()=user_id);
+
+drop policy if exists "own_savings_goals" on savings_goals;
+create policy "own_savings_goals"    on savings_goals     for all using (auth.uid()=user_id);
 
 drop policy if exists "own_wellness_logs" on wellness_logs;
 create policy "own_wellness_logs"    on wellness_logs     for all using (auth.uid()=user_id);
@@ -297,3 +321,6 @@ create trigger t_reminders before update on reminders for each row execute proce
 
 drop trigger if exists t_profiles on profiles;
 create trigger t_profiles before update on profiles for each row execute procedure update_updated_at();
+
+drop trigger if exists t_savings on savings_goals;
+create trigger t_savings before update on savings_goals for each row execute procedure update_updated_at();
