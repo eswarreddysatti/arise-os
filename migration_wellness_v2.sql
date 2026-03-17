@@ -69,3 +69,11 @@ BEGIN
     ALTER TABLE wellness_logs ADD CONSTRAINT wellness_logs_user_id_log_date_key UNIQUE (user_id, log_date);
   END IF;
 END $$;
+
+-- Rename name to title if it exists
+DO $$ 
+BEGIN 
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='habits' AND column_name='name') THEN
+    ALTER TABLE habits RENAME COLUMN name TO title;
+  END IF;
+END $$;
