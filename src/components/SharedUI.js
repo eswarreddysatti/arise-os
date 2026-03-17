@@ -37,12 +37,47 @@ export const BigNumber = ({ children, t, style = {} }) => (
   <span style={{ fontFamily: "'Bebas Neue'", fontSize: 72, lineHeight: 1, color: t.black, letterSpacing: "0.02em", ...style }}>{children}</span>
 );
 
-export const ActionBtn = ({ children, onClick, t, sh, secondary = false, style = {}, disabled = false }) => (
-  <button onClick={onClick} disabled={disabled} style={{ padding: "14px 20px", border: "none", cursor: disabled ? "not-allowed" : "pointer", borderRadius: 16, background: secondary ? t.bg : t.accent, color: secondary ? t.grey : t.bg, boxShadow: secondary ? sh.card : sh.btn, fontSize: 14, fontWeight: 700, letterSpacing: "0.06em", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s ease", opacity: disabled ? 0.6 : 1, ...style }}>{children}</button>
+export const ActionBtn = ({ children, onClick, t, sh, secondary = false, style = {}, disabled = false, danger = false }) => (
+  <button 
+    onClick={onClick} 
+    disabled={disabled} 
+    style={{ 
+      padding: "16px 24px", 
+      border: "none", 
+      cursor: disabled ? "not-allowed" : "pointer", 
+      borderRadius: 18, 
+      background: danger ? t.orange : (secondary ? t.bg : t.accent), 
+      color: (danger || !secondary) ? t.bg : t.grey, 
+      boxShadow: secondary ? sh.card : sh.btn, 
+      fontSize: 13, 
+      fontWeight: 800, 
+      letterSpacing: "0.1em", 
+      textTransform: "uppercase",
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center", 
+      gap: 8, 
+      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)", 
+      opacity: disabled ? 0.6 : 1, 
+      ...style 
+    }}
+  >
+    {children}
+  </button>
+);
+
+export const Segment = ({ label, value, unit, t }) => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    <SectionLabel t={t}>{label}</ SectionLabel>
+    <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+      <BigNumber t={t}>{value}</BigNumber>
+      {unit && <span style={{ fontSize: 14, fontWeight: 700, color: t.grey, textTransform: "uppercase" }}>{unit}</span>}
+    </div>
+  </div>
 );
 
 export const Toast = ({ msg, t, sh }) => msg ? (
-  <div style={{ position: "fixed", bottom: 110, left: "50%", transform: "translateX(-50%)", background: t.accent, color: t.bg, padding: "12px 24px", borderRadius: 50, fontSize: 13, fontWeight: 700, boxShadow: sh.raised, zIndex: 999, whiteSpace: "nowrap" }}>{msg}</div>
+  <div style={{ position: "fixed", bottom: 120, left: "50%", transform: "translateX(-50%)", background: t.accent, color: t.bg, padding: "14px 28px", borderRadius: 50, fontSize: 13, fontWeight: 800, boxShadow: sh.raised, zIndex: 999, whiteSpace: "nowrap", animation: "fadeUp 0.3s ease-out" }}>{msg}</div>
 ) : null;
 
 export const Loader = ({ t }) => (

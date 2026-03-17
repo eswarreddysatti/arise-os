@@ -1,25 +1,25 @@
 export const makeTheme = (dark) => ({
   bg: dark ? "#141414" : "#E8E6E1", 
   bgDeep: dark ? "#0e0e0e" : "#DEDAD4",
-  card: dark ? "#1E1E1E" : "#ECEAE5", 
+  card: dark ? "#1C1C1C" : "#ECEAE5", 
   cardHigh: dark ? "#252525" : "#F2F0EB",
-  white: dark ? "#1E1E1E" : "#FFFFFF", 
+  white: dark ? "#1C1C1C" : "#FFFFFF", 
   black: dark ? "#F0EEE9" : "#141414",
-  grey: dark ? "#666" : "#888", 
+  grey: dark ? "#666" : "#86837C", 
   lightGrey: dark ? "#3a3a3a" : "#C8C5BF",
   accent: dark ? "#E0DDD7" : "#1A1A1A", 
   accentSoft: dark ? "#2a2a2a" : "#D0CEC9",
   orange: "#E8500A", 
-  sdark: dark ? "rgba(0,0,0,0.5)" : "rgba(180,176,168,0.8)",
-  slight: dark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.9)", 
+  sdark: dark ? "rgba(0,0,0,0.6)" : "rgba(174,170,160,0.7)",
+  slight: dark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.9)", 
   dark,
 });
 
 export const getShadow = (t) => ({
-  card: `8px 8px 24px ${t.sdark}, -4px -4px 14px ${t.slight}`,
-  inset: `inset 5px 5px 14px ${t.sdark}, inset -3px -3px 10px ${t.slight}`,
-  btn: `6px 6px 18px ${t.sdark}, -3px -3px 10px ${t.slight}`,
-  raised: `12px 12px 32px ${t.sdark}, -6px -6px 18px ${t.slight}`,
+  card: `10px 10px 20px ${t.sdark}, -10px -10px 20px ${t.slight}`,
+  inset: `inset 6px 6px 12px ${t.sdark}, inset -6px -6px 12px ${t.slight}`,
+  btn: `5px 5px 15px ${t.sdark}, -5px -5px 15px ${t.slight}`,
+  raised: `20px 20px 40px ${t.sdark}, -10px -10px 30px ${t.slight}`,
 });
 
 export const GS = (t) => `

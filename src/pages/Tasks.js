@@ -1,3 +1,4 @@
+import { ActionBtn, NeuInput, NeuTextarea, Pill, IconBtn, CheckBtn, Card, SectionLabel, BigNumber, I } from "../App";
 import React, { useState, useEffect } from "react";
 import { tasksAPI } from "../lib/supabase";
 import { I } from "../components/Icons";

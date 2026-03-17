@@ -27,7 +27,7 @@ export const authAPI = supabase.auth;
 
 // Profile
 export const profileAPI = {
-  get: async (uid) => IS_MOCK ? mockData({ full_name: 'Eswar Reddy', career_goal: 'Cybersecurity Expert', location: 'India', dark_mode: true }) : supabase.from('profiles').select('*').eq('id', uid).single(),
+  get: async (uid) => IS_MOCK ? mockData({ full_name: 'Eswar Reddy', career_goal: 'Cybersecurity Expert', location: 'India', dark_mode: true, avatar_url: '', logo_url: '' }) : supabase.from('profiles').select('*').eq('id', uid).single(),
   update: async (uid, data) => IS_MOCK ? mockData(data) : supabase.from('profiles').update(data).eq('id', uid).select().single(),
 };
 
@@ -38,24 +38,32 @@ export const tasksAPI = {
   update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('tasks').update(data).eq('id', id).select().single(),
   delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('tasks').delete().eq('id', id),
   // Subtasks
-  addSubtask: async (uid, taskId, title) => IS_MOCK ? mockData({ id: Date.now().toString(), task_id: taskId, title, done: false }) : supabase.from('subtasks').insert([{ user_id: uid, task_id: taskId, title, done: false }]).select().single(),
+  addSubtask: async (uid, taskId, title, extras = {}) => IS_MOCK ? mockData({ id: Date.now().toString(), task_id: taskId, title, done: false, ...extras }) : supabase.from('subtasks').insert([{ user_id: uid, task_id: taskId, title, done: false, ...extras }]).select().single(),
   updateSubtask: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('subtasks').update(data).eq('id', id).select().single(),
+  deleteSubtask: async (id) => IS_MOCK ? mockData(null) : supabase.from('subtasks').delete().eq('id', id),
 };
 
 // Habits
 export const habitsAPI = {
-  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('habits').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('habits').select('*, habit_logs(*)').eq('user_id', uid).order('created_at', { ascending: false }),
   add: async (uid, habit) => IS_MOCK ? mockData({ id: Date.now().toString(), ...habit }) : supabase.from('habits').insert([{ ...habit, user_id: uid }]).select().single(),
   update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('habits').update(data).eq('id', id).select().single(),
   delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('habits').delete().eq('id', id),
+  // Logs
+  log: async (uid, habitId, log_date, completed = true) => IS_MOCK ? mockData({ id: 'mock-log', habit_id: habitId, log_date, completed }) : supabase.from('habit_logs').upsert({ user_id: uid, habit_id: habitId, log_date, completed }).select().single(),
 };
 
-// Reminders
-export const remindersAPI = {
-  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('reminders').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
-  add: async (uid, rem) => IS_MOCK ? mockData({ id: Date.now().toString(), ...rem }) : supabase.from('reminders').insert([{ ...rem, user_id: uid }]).select().single(),
-  update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('reminders').update(data).eq('id', id).select().single(),
-  delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('reminders').delete().eq('id', id),
+// Focus Sessions
+export const focusAPI = {
+  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('focus_sessions').select('*').eq('user_id', uid).order('start_time', { ascending: false }),
+  start: async (uid, session) => IS_MOCK ? mockData({ id: Date.now().toString(), ...session }) : supabase.from('focus_sessions').insert([{ ...session, user_id: uid }]).select().single(),
+  update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('focus_sessions').update(data).eq('id', id).select().single(),
+};
+
+// Wellness
+export const wellnessAPI = {
+  getToday: async (uid, date) => IS_MOCK ? mockData({ water: 0, steps: 0, mood: 3 }) : supabase.from('wellness_logs').select('*').eq('user_id', uid).eq('log_date', date).single(),
+  update: async (uid, date, data) => IS_MOCK ? mockData(data) : supabase.from('wellness_logs').upsert({ user_id: uid, log_date: date, ...data }).select().single(),
 };
 
 // Notes
