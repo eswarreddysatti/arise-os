@@ -22,13 +22,20 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
 
   const updateWellness = useCallback(async (updates) => {
     if (!userId) return;
-    const { data, error } = await wellnessAPI.update(userId, today, updates);
-    if (!error && data) {
-      setWellness(data);
-      if (updates.steps) setStepCount(updates.steps);
-    } else {
-      console.error("Sync Error Details:", error);
-      onToast(error?.message ? `Sync error: ${error.message}` : "Sync error");
+    try {
+      // Sanitize updates to prevent NaN issues
+      const cleanUpdates = {};
+      Object.keys(updates).forEach(k => {
+        if (typeof updates[k] === 'number' && isNaN(updates[k])) cleanUpdates[k] = 0;
+        else cleanUpdates[k] = updates[k];
+      });
+
+      const { data, error } = await wellnessAPI.update(userId, today, cleanUpdates);
+      if (error) throw error;
+      if (data) setWellness(data);
+    } catch (err) {
+      console.error("Critical Wellness Sync Error:", err);
+      onToast(err.message || "Wellness Sync Failed");
     }
   }, [userId, today, setWellness, onToast]);
 
@@ -67,12 +74,30 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
   }, [isTracking, updateWellness]);
 
   const saveSetup = async () => {
-    if (!userId) return;
-    const { data } = await profileAPI.update(userId, setupForm);
-    if (data) {
-      setProfile(data);
-      setShowSetup(false);
-      onToast("System calibrated");
+    if (!userId) {
+      onToast("Auth Session Missing");
+      return;
+    }
+    try {
+      // Sanitize setup form
+      const cleanSetup = {
+        water_bottle_size: parseInt(setupForm.water_bottle_size) || 500,
+        water_goal_litres: parseFloat(setupForm.water_goal_litres) || 2.5,
+        steps_goal: parseInt(setupForm.steps_goal) || 8000
+      };
+
+      const { data, error } = await profileAPI.update(userId, cleanSetup);
+      if (error) throw error;
+      if (data) {
+        setProfile(data);
+        setShowSetup(false);
+        onToast("System calibrated");
+      } else {
+        throw new Error("No data returned from profile update");
+      }
+    } catch (err) {
+      console.error("Critical Setup Error:", err);
+      onToast(`Setup Failed: ${err.message || 'Unknown Error'}`);
     }
   };
 
