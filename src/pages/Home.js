@@ -2,7 +2,7 @@ import React from 'react';
 import { MONTHS, WDAYS } from '../utils/constants';
 import { Card, SectionLabel, BigNumber, ActionBtn, Segment } from '../components/SharedUI';
 
-export const HomePage = ({ t, sh, tasks, habits, focusSessions = [], wellness = { water: 0, steps: 0, mood: 3, sleep: 0 }, profile, setPage }) => {
+export const HomePage = ({ t, sh, tasks, habits, focusSessions = [], wellness = {}, profile, setPage }) => {
   const now = new Date();
   const name = profile?.full_name?.split(" ")[0] || "Chief";
   
@@ -14,9 +14,25 @@ export const HomePage = ({ t, sh, tasks, habits, focusSessions = [], wellness = 
   // Today's Tasks
   const todayTasks = tasks.filter(t => !t.done).slice(0, 3);
   
-  // Habits Streak info (Mock for now, will link to habit_logs logic later)
+  // Habits Streak info
   const doneHabits = habits.filter(h => h.done_today).length;
   const avgStreak = habits.length ? Math.round(habits.reduce((acc, h) => acc + (h.streak || 0), 0) / habits.length) : 0;
+
+  // Wellness Calculations
+  const getSleepHours = () => {
+    if (!wellness.sleep_start || !wellness.sleep_wake) return 0;
+    const start = new Date(wellness.sleep_start);
+    const wake = new Date(wellness.sleep_wake);
+    let diff = (wake - start) / 1000 / 60 / 60;
+    if (diff < 0) diff += 24;
+    return diff.toFixed(1);
+  };
+
+  const wellnessStats = [
+    { label: "Water", val: ((wellness.water_intake_ml || 0) / 1000).toFixed(1), unit: "L" },
+    { label: "Steps", val: (wellness.steps || 0) >= 1000 ? ((wellness.steps || 0) / 1000).toFixed(1) : (wellness.steps || 0), unit: (wellness.steps || 0) >= 1000 ? "K" : "S" },
+    { label: "Sleep", val: getSleepHours(), unit: "H" }
+  ];
 
   return (
     <div className="page" style={{ padding: "80px 24px 120px" }}>
@@ -69,12 +85,8 @@ export const HomePage = ({ t, sh, tasks, habits, focusSessions = [], wellness = 
       {/* 6. Wellness Segment */}
       <SectionLabel t={t}>Wellness Status</SectionLabel>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
-        {[
-          { label: "Water", val: wellness.water || 0, unit: "L" },
-          { label: "Steps", val: wellness.steps || 0, unit: "K" },
-          { label: "Sleep", val: wellness.sleep || 0, unit: "H" }
-        ].map(w => (
-          <Card key={w.label} t={t} sh={sh} style={{ padding: "16px 12px", textAlign: "center" }}>
+        {wellnessStats.map(w => (
+          <Card key={w.label} t={t} sh={sh} style={{ padding: "16px 12px", textAlign: "center" }} onClick={() => setPage('wellness')}>
             <p style={{ fontSize: 9, fontWeight: 900, color: t.grey, marginBottom: 4, textTransform: "uppercase" }}>{w.label}</p>
             <BigNumber t={t} style={{ fontSize: 32 }}>{w.val}</BigNumber>
             <span style={{ fontSize: 10, fontWeight: 900, color: t.grey }}>{w.unit}</span>

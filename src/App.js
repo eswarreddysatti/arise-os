@@ -43,6 +43,7 @@ export default function App() {
   const [notes, setNotes] = useState([]);
   const [goals, setGoals] = useState([]);
   const [events, setEvents] = useState([]);
+  const [wellness, setWellness] = useState({});
 
   const t = makeTheme(darkMode);
   const sh = getShadow(t);
@@ -80,11 +81,13 @@ export default function App() {
     const uid = session.user.id;
     const load = async () => {
       try {
+        const today = new Date().toISOString().split('T')[0];
         const [
-          { data: t2 }, { data: h }, { data: r }, { data: n }, { data: g }, { data: e }, { data: p }
+          { data: t2 }, { data: h }, { data: r }, { data: n }, { data: g }, { data: e }, { data: p }, { data: w }
         ] = await Promise.all([
           tasksAPI.getAll(uid), habitsAPI.getAll(uid), remindersAPI.getAll(uid),
           notesAPI.getAll(uid), goalsAPI.getAll(uid), calendarAPI.getAll(uid), profileAPI.get(uid),
+          wellnessAPI.getToday(uid, today)
         ]);
         if (t2) setTasks(t2);
         if (h) setHabits(h);
@@ -93,6 +96,7 @@ export default function App() {
         if (g) setGoals(g);
         if (e) setEvents(e);
         if (p) { setProfile(p); setDarkMode(p.dark_mode || false); }
+        if (w) setWellness(w);
       } catch (err) {
         console.error("Load Error:", err);
       }
@@ -127,7 +131,7 @@ export default function App() {
   if (authLoading) return <><style>{GS(t)}</style><Loader t={t} /></>;
   if (!session) return <><style>{GS(t)}</style><AuthScreen t={t} sh={sh} onToast={showToast} /></>;
 
-  const shared = { t, sh, userId: uid, onToast: showToast };
+  const shared = { t, sh, userId: uid, onToast: showToast, wellness, setWellness };
   const pageComponents = {
     home: <HomePage      {...shared} tasks={tasks} habits={habits} reminders={reminders} goals={goals} profile={profile} setPage={setPage} />,
     tasks: <TasksPage     {...shared} tasks={tasks} setTasks={setTasks} />,
@@ -137,7 +141,7 @@ export default function App() {
     notes: <NotesPage     {...shared} notes={notes} setNotes={setNotes} />,
     pomodoro: <PomodoroPage  {...shared} />,
     finance: <FinancePage   {...shared} />,
-    wellness: <WellnessPage  {...shared} />,
+    wellness: <WellnessPage  {...shared} profile={profile} setProfile={setProfile} />,
     journal: <JournalPage   {...shared} />,
     goals: <GoalsPage     {...shared} goals={goals} setGoals={setGoals} />,
     reminders: <RemindersPage {...shared} reminders={reminders} setReminders={setReminders} />,

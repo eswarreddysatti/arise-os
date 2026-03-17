@@ -73,11 +73,15 @@ create table if not exists wellness_logs (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
   log_date date default current_date, 
-  water numeric(4,2) default 0, -- in litres
-  bottles integer default 0,
-  sleep numeric(4,1) default 0, 
+  water_intake_ml integer default 0,
+  water_bottle_snapshot_ml integer default 500,
+  water_goal_snapshot_litres numeric(4,2) default 2.5,
   steps integer default 0, 
+  steps_goal_snapshot integer default 8000,
+  sleep_start timestamptz,
+  sleep_wake timestamptz,
   mood integer default 3 check (mood between 1 and 5),
+  mood_note text default '',
   created_at timestamptz default now(), 
   updated_at timestamptz default now(),
   unique(user_id, log_date)
@@ -138,6 +142,9 @@ create table if not exists profiles (
   logo_url text default '', -- For global branding
   location text default '', 
   dark_mode boolean default false,
+  water_bottle_size integer default 500, -- in ml
+  water_goal_litres numeric(4,2) default 2.5,
+  steps_goal integer default 8000,
   migration_target text default '',
   created_at timestamptz default now(), 
   updated_at timestamptz default now()

@@ -62,7 +62,17 @@ export const focusAPI = {
 
 // Wellness
 export const wellnessAPI = {
-  getToday: async (uid, date) => IS_MOCK ? mockData({ water: 0, steps: 0, mood: 3 }) : supabase.from('wellness_logs').select('*').eq('user_id', uid).eq('log_date', date).single(),
+  getToday: async (uid, date) => IS_MOCK ? mockData({ 
+    water_intake_ml: 0, 
+    water_bottle_snapshot_ml: 500,
+    water_goal_snapshot_litres: 2.5,
+    steps: 0, 
+    steps_goal_snapshot: 8000,
+    mood: 3,
+    mood_note: '',
+    sleep_start: null,
+    sleep_wake: null
+  }) : supabase.from('wellness_logs').select('*').eq('user_id', uid).eq('log_date', date).single(),
   update: async (uid, date, data) => IS_MOCK ? mockData(data) : supabase.from('wellness_logs').upsert({ user_id: uid, log_date: date, ...data }).select().single(),
 };
 
