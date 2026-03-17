@@ -9,6 +9,37 @@ ALTER TABLE wellness_logs ADD COLUMN IF NOT EXISTS sleep_start timestamptz;
 ALTER TABLE wellness_logs ADD COLUMN IF NOT EXISTS sleep_wake timestamptz;
 ALTER TABLE wellness_logs ADD COLUMN IF NOT EXISTS mood_note text default '';
 
+-- NEW v2.0 TABLES
+CREATE TABLE IF NOT EXISTS habit_logs (
+  id uuid primary key default uuid_generate_v4(),
+  habit_id uuid references habits(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  log_date date default current_date,
+  completed boolean default true,
+  unique(habit_id, log_date)
+);
+
+CREATE TABLE IF NOT EXISTS focus_sessions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  session_type text default 'work' check (session_type in ('work', 'break')),
+  duration integer not null,
+  start_time timestamptz default now(),
+  end_time timestamptz,
+  completed boolean default false,
+  linked_task_id uuid references tasks(id) on delete set null,
+  created_at timestamptz default now()
+);
+
+-- ENABLE RLS & POLICIES FOR NEW TABLES
+ALTER TABLE habit_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own_habit_logs" ON habit_logs;
+CREATE POLICY "own_habit_logs" ON habit_logs FOR ALL USING (auth.uid() = user_id);
+
+ALTER TABLE focus_sessions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own_focus_sessions" ON focus_sessions;
+CREATE POLICY "own_focus_sessions" ON focus_sessions FOR ALL USING (auth.uid() = user_id);
+
 -- Remove old columns if they exist (OPTIONAL, safe to skip)
 -- ALTER TABLE wellness_logs DROP COLUMN IF EXISTS water;
 -- ALTER TABLE wellness_logs DROP COLUMN IF EXISTS bottles;
