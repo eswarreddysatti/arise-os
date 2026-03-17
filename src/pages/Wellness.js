@@ -27,7 +27,8 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
       setWellness(data);
       if (updates.steps) setStepCount(updates.steps);
     } else {
-      onToast("Sync error");
+      console.error("Sync Error Details:", error);
+      onToast(error?.message ? `Sync error: ${error.message}` : "Sync error");
     }
   }, [userId, today, setWellness, onToast]);
 
