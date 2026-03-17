@@ -6,7 +6,7 @@ import { MONTHS, WDAYS, WSHORT } from '../utils/constants';
 
 export const CalendarPage = ({ t, sh, tasks, events, setEvents, userId, onToast }) => {
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ title: "", date: new Date().toISOString().split('T')[0], type: "event" });
+  const [form, setForm] = useState({ title: "", event_date: new Date().toISOString().split('T')[0], type: "event" });
   const [selDate, setSelDate] = useState(new Date().toISOString().split('T')[0]);
 
   const now = new Date();
@@ -18,11 +18,11 @@ export const CalendarPage = ({ t, sh, tasks, events, setEvents, userId, onToast 
     if (!form.title.trim()) return;
     const { data } = await calendarAPI.add(userId, form);
     if (data) setEvents([data, ...events]);
-    setAdding(false); setForm({ title: "", date: selDate, type: "event" });
+    setAdding(false); setForm({ title: "", event_date: selDate, type: "event" });
     onToast("Event added");
   };
 
-  const dayEvents = events.filter(e => e.date === selDate);
+  const dayEvents = events.filter(e => e.event_date === selDate);
   const dayTasks = tasks.filter(t2 => t2.due_date === selDate);
 
   return (
@@ -39,7 +39,7 @@ export const CalendarPage = ({ t, sh, tasks, events, setEvents, userId, onToast 
             const d = i + 1;
             const ds = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             const isSel = selDate === ds;
-            const hasEvent = events.some(e => e.date === ds) || tasks.some(t2 => t2.due_date === ds);
+            const hasEvent = events.some(e => e.event_date === ds) || tasks.some(t2 => t2.due_date === ds);
             return (
               <button key={d} onClick={() => setSelDate(ds)} style={{ height: 40, border: "none", borderRadius: 10, background: isSel ? t.accent : "transparent", color: isSel ? t.bg : t.black, fontSize: 13, fontWeight: 800, cursor: "pointer", position: "relative", transition: "all 0.2s" }}>
                 {d}
