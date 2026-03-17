@@ -4,7 +4,7 @@ import { I } from '../components/Icons';
 import { wellnessAPI, profileAPI } from '../lib/supabase';
 
 export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setProfile, userId, onToast }) => {
-  const [loading, setLoading] = useState(false);
+  // No loading state needed for now
   const [showSetup, setShowSetup] = useState(false);
   const [setupForm, setSetupForm] = useState({ 
     water_bottle_size: profile?.water_bottle_size || 500, 
@@ -52,11 +52,10 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
       }
     }
     return () => window.removeEventListener('devicemotion', handleMotion);
-  }, [isTracking]);
+  }, [isTracking, updateWellness]);
 
   const updateWellness = async (updates) => {
     if (!userId) return;
-    setLoading(true);
     const { data, error } = await wellnessAPI.update(userId, today, updates);
     if (!error && data) {
       setWellness(data);
@@ -64,7 +63,6 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
     } else {
       onToast("Sync error");
     }
-    setLoading(false);
   };
 
   const saveSetup = async () => {
