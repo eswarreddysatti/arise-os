@@ -43,18 +43,35 @@ export const BottomNav = ({ active, setActive, t, sh }) => (
   </div>
 );
 
-export const TopBar = ({ title, darkMode, toggleDark, onBell, t, sh, logo }) => (
+export const TopBar = ({ title, darkMode, toggleDark, onBell, t, sh, logoUrl, avatarUrl, userName, onProfile }) => (
   <div style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, zIndex: 50, background: t.bg, padding: "20px 24px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${t.slight}` }}>
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      {logo && <img src={logo} alt="Logo" style={{ height: 28, width: "auto", borderRadius: 6, boxShadow: sh.card }} />}
+      {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: 28, width: "auto", borderRadius: 6, boxShadow: sh.card }} />}
       <span style={{ fontFamily: "'Bebas Neue'", fontSize: 26, letterSpacing: "0.15em", color: t.black }}>{title || "ARISE"}</span>
     </div>
-    <div style={{ display: "flex", gap: 10 }}>
+    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
       <IconBtn icon={darkMode ? "sun" : "moon"} onClick={toggleDark} t={t} sh={sh} size={40} />
       <div style={{ position: "relative" }}>
         <IconBtn icon="bell" onClick={onBell} t={t} sh={sh} size={40} />
         <div style={{ position: "absolute", top: 8, right: 8, width: 8, height: 8, borderRadius: "50%", background: t.orange, boxShadow: `0 0 10px ${t.orange}80` }} />
       </div>
+      {/* Avatar */}
+      <button
+        onClick={onProfile}
+        style={{
+          width: 36, height: 36, borderRadius: 12, border: "none", cursor: "pointer",
+          background: t.card, boxShadow: sh.card, padding: 0, overflow: "hidden",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          backgroundImage: avatarUrl ? `url(${avatarUrl})` : "none",
+          backgroundSize: "cover", backgroundPosition: "center",
+        }}
+      >
+        {!avatarUrl && (
+          <span style={{ fontFamily: "'Bebas Neue'", fontSize: 16, color: t.orange }}>
+            {(userName || "U").charAt(0).toUpperCase()}
+          </span>
+        )}
+      </button>
     </div>
   </div>
 );

@@ -11,6 +11,7 @@ import { makeTheme, getShadow, GS } from "./components/Theme";
 // Navigation & Components
 import { TopBar, BottomNav } from "./components/Navigation";
 import { Toast, Loader } from "./components/SharedUI";
+import { FloatingTimer } from "./components/FloatingTimer";
 
 // Pages
 import { AuthScreen } from "./pages/Auth";
@@ -28,6 +29,16 @@ import { WellnessPage } from "./pages/Wellness";
 import { JournalPage } from "./pages/Journal";
 import { GoalsPage } from "./pages/Goals";
 
+const POMO_LS_KEY = 'arise_pomo_v3';
+const DEFAULT_POMO = {
+  workMins: 25, breakMins: 5, longBreakMins: 15,
+  sessionsBeforeLong: 4, completedSessions: 0,
+  timeLeft: 25 * 60, active: false, mode: 'work',
+  alarmActive: false, selectedAlarm: 'bell',
+  selectedAmbient: null, volume: 0.5, muted: false,
+  startTime: null,
+};
+
 export default function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -44,6 +55,43 @@ export default function App() {
   const [goals, setGoals] = useState([]);
   const [events, setEvents] = useState([]);
   const [wellness, setWellness] = useState({});
+
+  // Global Pomodoro state (persists across navigation)
+  const [pomoState, setPomoState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(POMO_LS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // If timer was active, recalculate timeLeft from startTime
+        if (parsed.active && parsed.startTime) {
+          const elapsed = Math.floor((Date.now() - new Date(parsed.startTime).getTime()) / 1000);
+          const totalDuration = (parsed.mode === 'work' ? parsed.workMins : parsed.breakMins) * 60;
+          parsed.timeLeft = Math.max(0, totalDuration - elapsed);
+        }
+        return { ...DEFAULT_POMO, ...parsed };
+      }
+    } catch (e) {}
+    return DEFAULT_POMO;
+  });
+
+  // Persist Pomodoro state to localStorage
+  useEffect(() => {
+    localStorage.setItem(POMO_LS_KEY, JSON.stringify(pomoState));
+  }, [pomoState]);
+
+  // Global Pomodoro tick (runs even when not on Pomodoro page)
+  useEffect(() => {
+    let timer;
+    if (pomoState.active && pomoState.timeLeft > 0) {
+      timer = setInterval(() => {
+        setPomoState(prev => ({
+          ...prev,
+          timeLeft: Math.max(0, prev.timeLeft - 1)
+        }));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [pomoState.active, pomoState.timeLeft > 0]);
 
   const t = makeTheme(darkMode);
   const sh = getShadow(t);
@@ -97,7 +145,7 @@ export default function App() {
         if (e) setEvents(e);
         if (p) { setProfile(p); setDarkMode(p.dark_mode || false); }
         if (w) setWellness(w);
-        else setWellness({}); // Ensure it's never null
+        else setWellness({});
       } catch (err) {
         console.error("Load Error:", err);
       }
@@ -140,7 +188,7 @@ export default function App() {
     habits: <HabitsPage    {...shared} habits={habits} setHabits={setHabits} />,
     more: <MorePage t={t} sh={sh} setPage={setPage} />,
     notes: <NotesPage     {...shared} notes={notes} setNotes={setNotes} />,
-    pomodoro: <PomodoroPage  {...shared} />,
+    pomodoro: <PomodoroPage  {...shared} pomoState={pomoState} setPomoState={setPomoState} />,
     finance: <FinancePage   {...shared} />,
     wellness: <WellnessPage  {...shared} profile={profile} setProfile={setProfile} />,
     journal: <JournalPage   {...shared} />,
@@ -161,7 +209,20 @@ export default function App() {
           t={t} 
           sh={sh} 
           logoUrl={profile?.logo_url}
+          avatarUrl={profile?.avatar_url}
+          userName={profile?.full_name}
+          onProfile={() => setPage("profile")}
         />
+        {/* Floating Timer — visible on all pages except Pomodoro */}
+        {page !== 'pomodoro' && (
+          <FloatingTimer
+            pomoState={pomoState}
+            setPomoState={setPomoState}
+            onNavigate={() => setPage('pomodoro')}
+            t={t}
+            sh={sh}
+          />
+        )}
         <div key={page} style={{ animation: "fadeUp 0.4s ease-out" }}>{pageComponents[page] || pageComponents.home}</div>
         <BottomNav active={activeTab} setActive={setPage} t={t} sh={sh} />
         <Toast msg={toast} t={t} sh={sh} />

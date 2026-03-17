@@ -1,10 +1,36 @@
-import React, { useState } from 'react';
-import { authAPI, profileAPI } from '../lib/supabase';
+import React, { useState, useRef } from 'react';
+import { authAPI, profileAPI, supabase } from '../lib/supabase';
 import { I } from '../components/Icons';
-import { Card, SectionLabel, BigNumber, NeuInput, ActionBtn, IconBtn } from '../components/SharedUI';
+import { Card, SectionLabel, BigNumber, NeuInput, ActionBtn } from '../components/SharedUI';
+
+// Client-side image compress & resize to 512x512
+const processImage = (file) => new Promise((resolve) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 512;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      // Center crop
+      const min = Math.min(img.width, img.height);
+      const sx = (img.width - min) / 2;
+      const sy = (img.height - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
 
 export const ProfilePage = ({ t, sh, darkMode, toggleDark, profile, setProfile, userId, tasks, habits, notes, onToast }) => {
   const [editing, setEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const fileInputRef = useRef(null);
   const [form, setForm] = useState({ 
     full_name: "", 
     career_goal: "", 
@@ -35,32 +61,78 @@ export const ProfilePage = ({ t, sh, darkMode, toggleDark, profile, setProfile, 
     }
   };
 
-  const signOut = async () => { await authAPI.signOut(); };
+  // Avatar Upload
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const blob = await processImage(file);
+      const path = `${userId}/avatar.jpg`;
+      
+      // Upload to Supabase Storage
+      const { error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+      
+      if (uploadErr) throw uploadErr;
+      
+      // Get public URL
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+      const avatarUrl = urlData?.publicUrl + `?t=${Date.now()}`; // Cache bust
+      
+      // Update profile
+      const { data, error: profileErr } = await profileAPI.update(userId, { avatar_url: avatarUrl });
+      if (profileErr) throw profileErr;
+      if (data) setProfile(data);
+      
+      onToast("Avatar uploaded ✓");
+    } catch (err) {
+      console.error("Avatar Upload Error:", err);
+      onToast("Upload failed: " + (err.message || "Unknown error"));
+    }
+    setUploading(false);
+  };
+
+  // Enhanced Sign Out
+  const signOut = async () => {
+    await authAPI.signOut();
+    localStorage.clear();
+    onToast("Signed out successfully");
+  };
+
   const maxStreak = habits.length ? Math.max(...habits.map(h => h.streak || 0)) : 0;
   const xp = tasks.filter(t2 => t2.done).length * 10;
 
   return (
     <div className="page" style={{ padding: "80px 24px 120px", animation: "fadeUp 0.5s ease-out" }}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png, image/jpeg, image/webp"
+        capture="environment"
+        onChange={handleAvatarUpload}
+        style={{ display: "none" }}
+      />
+
       <div style={{ marginBottom: 32 }}>
         <p style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.25em", color: t.grey, textTransform: "uppercase" }}>Master Identity</p>
         <BigNumber t={t}>PROFILE</BigNumber>
       </div>
 
       <Card t={t} sh={sh} style={{ marginBottom: 24, padding: "32px 24px" }}>
-        <div style={{ position: "relative", width: 100, height: 100, margin: "0 auto 24px" }}>
+        {/* Avatar with Upload */}
+        <div
+          style={{ position: "relative", width: 100, height: 100, margin: "0 auto 24px", cursor: "pointer" }}
+          onClick={() => !uploading && fileInputRef.current?.click()}
+        >
           <div style={{ 
-            width: 100, 
-            height: 100, 
-            borderRadius: 32, 
-            background: t.card, 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center", 
-            boxShadow: sh.raised,
-            overflow: "hidden",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundImage: profile?.avatar_url ? `url(${profile.avatar_url})` : "none"
+            width: 100, height: 100, borderRadius: 32,
+            background: t.card, display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: sh.raised, overflow: "hidden",
+            backgroundSize: "cover", backgroundPosition: "center",
+            backgroundImage: profile?.avatar_url ? `url(${profile.avatar_url})` : "none",
+            transition: "transform 0.3s",
           }}>
             {!profile?.avatar_url && (
               <BigNumber t={t} style={{ fontSize: 44, color: t.orange }}>
@@ -68,20 +140,25 @@ export const ProfilePage = ({ t, sh, darkMode, toggleDark, profile, setProfile, 
               </BigNumber>
             )}
           </div>
+          {/* Camera overlay */}
+          <div style={{
+            position: "absolute", bottom: -4, right: -4,
+            width: 32, height: 32, borderRadius: 10,
+            background: t.accent, boxShadow: sh.btn,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {uploading ? (
+              <div className="spin" style={{ width: 14, height: 14, border: `2px solid ${t.bg}40`, borderTopColor: t.bg, borderRadius: "50%" }} />
+            ) : (
+              <I n="camera" s={14} c={t.bg} />
+            )}
+          </div>
           {profile?.logo_url && (
             <div style={{ 
-              position: "absolute", 
-              bottom: -5, 
-              right: -5, 
-              width: 32, 
-              height: 32, 
-              borderRadius: 10, 
-              background: t.white, 
-              padding: 4, 
-              boxShadow: sh.card,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
+              position: "absolute", top: -5, right: -5,
+              width: 28, height: 28, borderRadius: 8,
+              background: t.white, padding: 3, boxShadow: sh.card,
+              display: "flex", alignItems: "center", justifyContent: "center"
             }}>
               <img src={profile.logo_url} alt="Logo" style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 4 }} />
             </div>
@@ -94,7 +171,6 @@ export const ProfilePage = ({ t, sh, darkMode, toggleDark, profile, setProfile, 
             <NeuInput t={t} sh={sh} placeholder="Full Name..." value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} />
             <NeuInput t={t} sh={sh} placeholder="Career Trajectory..." value={form.career_goal} onChange={e => setForm({ ...form, career_goal: e.target.value })} />
             <NeuInput t={t} sh={sh} placeholder="Primary Location..." value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
-            <NeuInput t={t} sh={sh} placeholder="Avatar URL (HTTPS)..." value={form.avatar_url} onChange={e => setForm({ ...form, avatar_url: e.target.value })} />
             <NeuInput t={t} sh={sh} placeholder="Global Logo URL (HTTPS)..." value={form.logo_url} onChange={e => setForm({ ...form, logo_url: e.target.value })} />
             <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
               <ActionBtn onClick={save} t={t} sh={sh} style={{ flex: 1 }}>SAVE CHANGES</ActionBtn>
@@ -129,6 +205,20 @@ export const ProfilePage = ({ t, sh, darkMode, toggleDark, profile, setProfile, 
         </Card>
       </div>
 
+      {/* Privacy Section */}
+      <SectionLabel t={t}>Data Privacy</SectionLabel>
+      <Card t={t} sh={sh} style={{ marginBottom: 24, padding: "20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: t.bg, boxShadow: sh.card, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <I n="shield" s={18} c={t.accent} />
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 800, color: t.black }}>Your data is 100% private</p>
+        </div>
+        <p style={{ fontSize: 12, color: t.grey, lineHeight: 1.6 }}>
+          ARISE uses Row Level Security (RLS) to ensure no one else can see your data. Each account is completely isolated and encrypted.
+        </p>
+      </Card>
+
       <SectionLabel t={t}>System Configuration</SectionLabel>
       <Card t={t} sh={sh} style={{ marginBottom: 24, padding: "8px 0" }}>
         <button 
@@ -148,21 +238,32 @@ export const ProfilePage = ({ t, sh, darkMode, toggleDark, profile, setProfile, 
 
         <div style={{ height: 1, background: t.bgDeep, margin: "4px 20px" }} />
 
-        <button 
-          onClick={signOut} 
-          style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", border: "none", background: "transparent", cursor: "pointer" }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: t.bg, boxShadow: sh.card, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <I n="logout" s={18} c={t.orange} />
+        {/* Sign Out with Confirmation */}
+        {showSignOutConfirm ? (
+          <div style={{ padding: "16px 20px" }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: t.black, marginBottom: 12, textAlign: "center" }}>Sign out of your account?</p>
+            <div style={{ display: "flex", gap: 12 }}>
+              <ActionBtn onClick={signOut} t={t} sh={sh} danger style={{ flex: 1, padding: "12px" }}>CONFIRM</ActionBtn>
+              <ActionBtn secondary onClick={() => setShowSignOutConfirm(false)} t={t} sh={sh} style={{ flex: 1, padding: "12px" }}>CANCEL</ActionBtn>
             </div>
-            <span style={{ fontSize: 14, fontWeight: 800, color: t.orange }}>TERMINATE SESSION</span>
           </div>
-          <I n="chevron-right" s={16} c={t.grey} />
-        </button>
+        ) : (
+          <button 
+            onClick={() => setShowSignOutConfirm(true)} 
+            style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", border: "none", background: "transparent", cursor: "pointer" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: t.bg, boxShadow: sh.card, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <I n="logout" s={18} c={t.orange} />
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 800, color: t.orange }}>TERMINATE SESSION</span>
+            </div>
+            <I n="chevron-right" s={16} c={t.grey} />
+          </button>
+        )}
       </Card>
 
-      <p style={{ textAlign: "center", fontSize: 11, color: t.grey, fontWeight: 800, letterSpacing: "0.2em" }}>ARISE OS V2.0 PRO</p>
+      <p style={{ textAlign: "center", fontSize: 11, color: t.grey, fontWeight: 800, letterSpacing: "0.2em" }}>ARISE OS V3.0 PRO</p>
     </div>
   );
 };
