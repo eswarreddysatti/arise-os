@@ -43,9 +43,12 @@ export const BottomNav = ({ active, setActive, t, sh }) => (
   </div>
 );
 
-export const TopBar = ({ title, darkMode, toggleDark, onBell, t, sh }) => (
+export const TopBar = ({ title, darkMode, toggleDark, onBell, t, sh, logo }) => (
   <div style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, zIndex: 50, background: t.bg, padding: "20px 24px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${t.slight}` }}>
-    <span style={{ fontFamily: "'Bebas Neue'", fontSize: 26, letterSpacing: "0.15em", color: t.black }}>{title || "ARISE"}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      {logo && <img src={logo} alt="Logo" style={{ height: 28, width: "auto", borderRadius: 6, boxShadow: sh.card }} />}
+      <span style={{ fontFamily: "'Bebas Neue'", fontSize: 26, letterSpacing: "0.15em", color: t.black }}>{title || "ARISE"}</span>
+    </div>
     <div style={{ display: "flex", gap: 10 }}>
       <IconBtn icon={darkMode ? "sun" : "moon"} onClick={toggleDark} t={t} sh={sh} size={40} />
       <div style={{ position: "relative" }}>

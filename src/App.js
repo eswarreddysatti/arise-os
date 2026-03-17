@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   supabase, profileAPI,
   tasksAPI, habitsAPI, remindersAPI, notesAPI, goalsAPI,
-  calendarAPI
+  calendarAPI, focusAPI, wellnessAPI, subscribe
 } from "./lib/supabase";
 
 // Theme & Global Styles
@@ -43,6 +43,8 @@ export default function App() {
   const [notes, setNotes] = useState([]);
   const [goals, setGoals] = useState([]);
   const [events, setEvents] = useState([]);
+  const [focusSessions, setFocusSessions] = useState([]);
+  const [wellness, setWellness] = useState({ water: 0, steps: 0, mood: 3, sleep: 0 });
 
   const t = makeTheme(darkMode);
   const sh = getShadow(t);
@@ -74,17 +76,50 @@ export default function App() {
     return () => subscription?.unsubscribe();
   }, []);
 
+  // Real-time Subscriptions
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const focusSub = subscribe('focus_sessions', (payload) => {
+      if (payload.new && payload.new.user_id === session.user.id) {
+        if (payload.eventType === 'INSERT') setFocusSessions(prev => [payload.new, ...prev]);
+        else if (payload.eventType === 'UPDATE') setFocusSessions(prev => prev.map(s => s.id === payload.new.id ? payload.new : s));
+      }
+    });
+    const wellnessSub = subscribe('wellness_logs', (payload) => {
+      const today = new Date().toISOString().split('T')[0];
+      if (payload.new && payload.new.user_id === session.user.id && payload.new.log_date === today) {
+        setWellness(payload.new);
+      }
+    });
+    const tasksSub = subscribe('tasks', (payload) => {
+      if (payload.new && payload.new.user_id === session.user.id) {
+        if (payload.eventType === 'INSERT') setTasks(prev => [payload.new, ...prev]);
+        else if (payload.eventType === 'UPDATE') setTasks(prev => prev.map(t2 => t2.id === payload.new.id ? payload.new : t2));
+        else if (payload.eventType === 'DELETE') setTasks(prev => prev.filter(t2 => t2.id === payload.old.id));
+      }
+    });
+
+    return () => {
+      focusSub.unsubscribe();
+      wellnessSub.unsubscribe();
+      tasksSub.unsubscribe();
+    };
+  }, [session]);
+
   // Load all data when session exists
   useEffect(() => {
     if (!session?.user?.id) return;
     const uid = session.user.id;
+    const today = new Date().toISOString().split('T')[0];
+    
     const load = async () => {
       try {
         const [
-          { data: t2 }, { data: h }, { data: r }, { data: n }, { data: g }, { data: e }, { data: p }
+          { data: t2 }, { data: h }, { data: r }, { data: n }, { data: g }, { data: e }, { data: p }, { data: f }, { data: w }
         ] = await Promise.all([
           tasksAPI.getAll(uid), habitsAPI.getAll(uid), remindersAPI.getAll(uid),
           notesAPI.getAll(uid), goalsAPI.getAll(uid), calendarAPI.getAll(uid), profileAPI.get(uid),
+          focusAPI.getAll(uid), wellnessAPI.getToday(uid, today)
         ]);
         if (t2) setTasks(t2);
         if (h) setHabits(h);
@@ -92,6 +127,8 @@ export default function App() {
         if (n) setNotes(n);
         if (g) setGoals(g);
         if (e) setEvents(e);
+        if (f) setFocusSessions(f);
+        if (w) setWellness(w);
         if (p) { setProfile(p); setDarkMode(p.dark_mode || false); }
       } catch (err) {
         console.error("Load Error:", err);
@@ -116,26 +153,26 @@ export default function App() {
 
   const shared = { t, sh, userId: uid, onToast: showToast };
   const pageComponents = {
-    home: <HomePage      {...shared} tasks={tasks} habits={habits} reminders={reminders} goals={goals} profile={profile} setPage={setPage} />,
-    tasks: <TasksPage     {...shared} tasks={tasks} setTasks={setTasks} />,
-    cal: <CalendarPage  {...shared} tasks={tasks} events={events} setEvents={setEvents} />,
-    habits: <HabitsPage    {...shared} habits={habits} setHabits={setHabits} />,
+    home: <HomePage {...shared} tasks={tasks} habits={habits} focusSessions={focusSessions} wellness={wellness} profile={profile} setPage={setPage} />,
+    tasks: <TasksPage {...shared} tasks={tasks} setTasks={setTasks} />,
+    cal: <CalendarPage {...shared} tasks={tasks} events={events} setEvents={setEvents} />,
+    habits: <HabitsPage {...shared} habits={habits} setHabits={setHabits} />,
     more: <MorePage t={t} sh={sh} setPage={setPage} />,
-    notes: <NotesPage     {...shared} notes={notes} setNotes={setNotes} />,
-    pomodoro: <PomodoroPage  {...shared} />,
-    finance: <FinancePage   {...shared} />,
-    wellness: <WellnessPage  {...shared} />,
-    journal: <JournalPage   {...shared} />,
-    goals: <GoalsPage     {...shared} goals={goals} setGoals={setGoals} />,
+    notes: <NotesPage {...shared} notes={notes} setNotes={setNotes} />,
+    pomodoro: <PomodoroPage {...shared} onSessionEnd={(s) => setFocusSessions([s, ...focusSessions])} />,
+    finance: <FinancePage {...shared} />,
+    wellness: <WellnessPage {...shared} wellness={wellness} setWellness={setWellness} />,
+    journal: <JournalPage {...shared} />,
+    goals: <GoalsPage {...shared} goals={goals} setGoals={setGoals} />,
     reminders: <RemindersPage {...shared} reminders={reminders} setReminders={setReminders} />,
-    profile: <ProfilePage   {...shared} darkMode={darkMode} toggleDark={toggleDark} profile={profile} setProfile={setProfile} tasks={tasks} habits={habits} notes={notes} />,
+    profile: <ProfilePage {...shared} darkMode={darkMode} toggleDark={toggleDark} profile={profile} setProfile={setProfile} tasks={tasks} habits={habits} notes={notes} />,
   };
 
   return (
     <>
       <style>{GS(t)}</style>
       <div style={{ maxWidth: 430, margin: "0 auto", minHeight: "100vh", background: t.bg, position: "relative", transition: "background 0.4s" }}>
-        <TopBar title={!mainPages.includes(page) ? page.toUpperCase() : "ARISE"} darkMode={darkMode} toggleDark={toggleDark} onBell={() => setPage("reminders")} t={t} sh={sh} />
+        <TopBar title={!mainPages.includes(page) ? page.toUpperCase() : "ARISE"} darkMode={darkMode} toggleDark={toggleDark} onBell={() => setPage("reminders")} t={t} sh={sh} logo={profile?.logo_url} />
         <div key={page} style={{ animation: "fadeUp 0.4s ease-out" }}>{pageComponents[page] || pageComponents.home}</div>
         <BottomNav active={activeTab} setActive={setPage} t={t} sh={sh} />
         <Toast msg={toast} t={t} sh={sh} />

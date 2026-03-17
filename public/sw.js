@@ -1,4 +1,4 @@
-const CACHE = 'arise-v1';
+const CACHE = 'arise-v2';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {
