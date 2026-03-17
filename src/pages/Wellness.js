@@ -3,7 +3,7 @@ import { Card, SectionLabel, BigNumber, ActionBtn, IconBtn, Segment, NeuInput, N
 import { I } from '../components/Icons';
 import { wellnessAPI, profileAPI } from '../lib/supabase';
 
-export const WellnessPage = ({ t, sh, wellness, setWellness, profile, setProfile, userId, onToast }) => {
+export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setProfile, userId, onToast }) => {
   const [loading, setLoading] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [setupForm, setSetupForm] = useState({ 

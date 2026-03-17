@@ -22,6 +22,24 @@ export const supabase = IS_MOCK ? {
 
 const mockData = (data) => Promise.resolve({ data, error: null });
 
+// Mock state for local testing persistence
+let localMockWellness = {
+  water_intake_ml: 0, 
+  water_bottle_snapshot_ml: 500,
+  water_goal_snapshot_litres: 2.5,
+  steps: 0, 
+  steps_goal_snapshot: 8000,
+  mood: 3,
+  mood_note: '',
+  sleep_start: null,
+  sleep_wake: null
+};
+
+const mockUpdateWellness = (updates) => {
+  localMockWellness = { ...localMockWellness, ...updates };
+  return Promise.resolve({ data: localMockWellness, error: null });
+};
+
 // Auth
 export const authAPI = supabase.auth;
 
@@ -62,18 +80,8 @@ export const focusAPI = {
 
 // Wellness
 export const wellnessAPI = {
-  getToday: async (uid, date) => IS_MOCK ? mockData({ 
-    water_intake_ml: 0, 
-    water_bottle_snapshot_ml: 500,
-    water_goal_snapshot_litres: 2.5,
-    steps: 0, 
-    steps_goal_snapshot: 8000,
-    mood: 3,
-    mood_note: '',
-    sleep_start: null,
-    sleep_wake: null
-  }) : supabase.from('wellness_logs').select('*').eq('user_id', uid).eq('log_date', date).single(),
-  update: async (uid, date, data) => IS_MOCK ? mockData(data) : supabase.from('wellness_logs').upsert({ user_id: uid, log_date: date, ...data }).select().single(),
+  getToday: async (uid, date) => IS_MOCK ? mockData(localMockWellness) : supabase.from('wellness_logs').select('*').eq('user_id', uid).eq('log_date', date).single(),
+  update: async (uid, date, data) => IS_MOCK ? mockUpdateWellness(data) : supabase.from('wellness_logs').upsert({ user_id: uid, log_date: date, ...data }).select().single(),
 };
 
 // Notes

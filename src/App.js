@@ -97,6 +97,7 @@ export default function App() {
         if (e) setEvents(e);
         if (p) { setProfile(p); setDarkMode(p.dark_mode || false); }
         if (w) setWellness(w);
+        else setWellness({}); // Ensure it's never null
       } catch (err) {
         console.error("Load Error:", err);
       }
