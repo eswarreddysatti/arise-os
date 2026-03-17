@@ -139,10 +139,10 @@ create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text default '', 
   avatar_url text default '',
-  logo_url text default '', -- For global branding
+  logo_url text default '', 
   location text default '', 
   dark_mode boolean default false,
-  water_bottle_size integer default 500, -- in ml
+  water_bottle_size integer default 500,
   water_goal_litres numeric(4,2) default 2.5,
   steps_goal integer default 8000,
   migration_target text default '',
