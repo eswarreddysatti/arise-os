@@ -274,11 +274,26 @@ create trigger on_auth_user_created after insert on auth.users
 create or replace function update_updated_at() returns trigger language plpgsql as $$
 begin new.updated_at=now(); return new; end;
 $$;
+drop trigger if exists t_tasks on tasks;
 create trigger t_tasks before update on tasks for each row execute procedure update_updated_at();
+
+drop trigger if exists t_habits on habits;
 create trigger t_habits before update on habits for each row execute procedure update_updated_at();
+
+drop trigger if exists t_notes on notes;
 create trigger t_notes before update on notes for each row execute procedure update_updated_at();
+
+drop trigger if exists t_goals on goals;
 create trigger t_goals before update on goals for each row execute procedure update_updated_at();
+
+drop trigger if exists t_wellness on wellness_logs;
 create trigger t_wellness before update on wellness_logs for each row execute procedure update_updated_at();
+
+drop trigger if exists t_journal on journal_entries;
 create trigger t_journal before update on journal_entries for each row execute procedure update_updated_at();
+
+drop trigger if exists t_reminders on reminders;
 create trigger t_reminders before update on reminders for each row execute procedure update_updated_at();
+
+drop trigger if exists t_profiles on profiles;
 create trigger t_profiles before update on profiles for each row execute procedure update_updated_at();
