@@ -16,10 +16,19 @@ export const HabitsPage = ({ t, sh, habits, setHabits, userId, onToast }) => {
 
   const add = async () => {
     if (!newHabit.trim()) return;
-    const { data } = await habitsAPI.add(userId, { title: newHabit, streak: 0, done_today: false });
-    if (data) setHabits([data, ...habits]);
-    setNewHabit(""); setAdding(false);
-    onToast("Habit added");
+    try {
+      const { data, error } = await habitsAPI.add(userId, { title: newHabit, streak: 0, done_today: false });
+      if (error) throw error;
+      if (data) {
+        setHabits([data, ...habits]);
+        setNewHabit(""); 
+        setAdding(false);
+        onToast("Habit added");
+      }
+    } catch (err) {
+      console.error("Add Habit Error:", err);
+      onToast("Sync error: " + (err.message || "Failed to add habit"));
+    }
   };
 
   const del = async (id) => {

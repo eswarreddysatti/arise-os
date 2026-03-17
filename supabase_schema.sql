@@ -35,7 +35,7 @@ create table if not exists subtasks (
 create table if not exists habits (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
-  name text not null, 
+  title text not null, 
   goal text default '', 
   category text default 'Health',
   streak integer default 0, 
