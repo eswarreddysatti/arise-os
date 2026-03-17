@@ -1,11 +1,15 @@
-// --- TEMPORARY MOCKED SUPABASE CLIENT FOR UI TESTING ---
-// This bypasses the need for a .env file and allows the app to load locally.
+import { createClient } from '@supabase/supabase-js';
 
-export const supabase = {
+const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+
+// If URL/Key are missing, we default to Mock mode automatically
+const IS_MOCK = !SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL === 'your-url';
+
+export const supabase = IS_MOCK ? {
   auth: {
     getSession: async () => ({ data: { session: { user: { id: 'mock-user-123' } } }, error: null }),
     onAuthStateChange: (cb) => {
-      // immediately fire authenticated event
       setTimeout(() => cb('SIGNED_IN', { user: { id: 'mock-user-123' } }), 100);
       return { data: { subscription: { unsubscribe: () => {} } } };
     },
@@ -14,94 +18,65 @@ export const supabase = {
     signOut: async () => ({ error: null }),
     getUser: async () => ({ data: { user: { id: 'mock-user-123' } }, error: null })
   }
-};
-
-export const authAPI = supabase.auth;
+} : createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const mockData = (data) => Promise.resolve({ data, error: null });
 
+// Auth
+export const authAPI = supabase.auth;
+
+// Profile
 export const profileAPI = {
-  get: () => mockData({ full_name: 'Test User', career_goal: 'Test Goal', location: 'Localhost', dark_mode: false }),
-  update: (_, data) => mockData(data),
+  get: async (uid) => IS_MOCK ? mockData({ full_name: 'Eswar Reddy', career_goal: 'Cybersecurity Expert', location: 'India', dark_mode: true }) : supabase.from('profiles').select('*').eq('id', uid).single(),
+  update: async (uid, data) => IS_MOCK ? mockData(data) : supabase.from('profiles').update(data).eq('id', uid).select().single(),
 };
 
+// Tasks
 export const tasksAPI = {
-  getAll: () => mockData([]),
-  add: (_, task) => mockData({ id: Date.now().toString(), ...task }),
-  update: (id, data) => mockData({ id, ...data }),
-  delete: () => mockData(null),
-  addSubtask: (_, taskId, title) => mockData({
-    id: Date.now().toString(),
-    task_id: taskId,
-    title,
-    description: '',
-    due_date: null,
-    priority: 'medium',
-    assignee_id: null,
-    done: false
-  }),
-  updateSubtask: (id, data) => mockData({ id, ...data }),
-  toggleSubtask: () => mockData(null),
-  deleteSubtask: () => mockData(null),
+  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('tasks').select('*, subtasks(*)').eq('user_id', uid).order('created_at', { ascending: false }),
+  add: async (uid, task) => IS_MOCK ? mockData({ id: Date.now().toString(), ...task }) : supabase.from('tasks').insert([{ ...task, user_id: uid }]).select().single(),
+  update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('tasks').update(data).eq('id', id).select().single(),
+  delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('tasks').delete().eq('id', id),
+  // Subtasks
+  addSubtask: async (uid, taskId, title) => IS_MOCK ? mockData({ id: Date.now().toString(), task_id: taskId, title, done: false }) : supabase.from('subtasks').insert([{ user_id: uid, task_id: taskId, title, done: false }]).select().single(),
+  updateSubtask: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('subtasks').update(data).eq('id', id).select().single(),
 };
 
+// Habits
 export const habitsAPI = {
-  getAll: () => mockData([]),
-  add: (_, habit) => mockData({ id: Date.now().toString(), ...habit }),
-  update: (id, data) => mockData({ id, ...data }),
-  delete: () => mockData(null),
+  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('habits').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+  add: async (uid, habit) => IS_MOCK ? mockData({ id: Date.now().toString(), ...habit }) : supabase.from('habits').insert([{ ...habit, user_id: uid }]).select().single(),
+  update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('habits').update(data).eq('id', id).select().single(),
+  delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('habits').delete().eq('id', id),
 };
 
+// Reminders
 export const remindersAPI = {
-  getAll: () => mockData([]),
-  add: (_, r) => mockData({ id: Date.now().toString(), ...r }),
-  update: () => mockData(null),
-  delete: () => mockData(null),
+  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('reminders').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+  add: async (uid, rem) => IS_MOCK ? mockData({ id: Date.now().toString(), ...rem }) : supabase.from('reminders').insert([{ ...rem, user_id: uid }]).select().single(),
+  update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('reminders').update(data).eq('id', id).select().single(),
+  delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('reminders').delete().eq('id', id),
 };
 
+// Notes
 export const notesAPI = {
-  getAll: () => mockData([]),
-  add: (_, note) => mockData({ id: Date.now().toString(), ...note }),
-  update: (id, data) => mockData({ id, ...data }),
-  delete: () => mockData(null),
+  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('notes').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+  add: async (uid, note) => IS_MOCK ? mockData({ id: Date.now().toString(), ...note }) : supabase.from('notes').insert([{ ...note, user_id: uid }]).select().single(),
+  update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('notes').update(data).eq('id', id).select().single(),
+  delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('notes').delete().eq('id', id),
 };
 
+// Goals
 export const goalsAPI = {
-  getAll: () => mockData([]),
-  add: (_, goal) => mockData({ id: Date.now().toString(), ...goal }),
-  update: (id, data) => mockData({ id, ...data }),
-  delete: () => mockData(null),
+  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('goals').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+  add: async (uid, goal) => IS_MOCK ? mockData({ id: Date.now().toString(), ...goal }) : supabase.from('goals').insert([{ ...goal, user_id: uid }]).select().single(),
+  update: async (id, data) => IS_MOCK ? mockData({ id, ...data }) : supabase.from('goals').update(data).eq('id', id).select().single(),
+  delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('goals').delete().eq('id', id),
 };
 
-export const financeAPI = {
-  getEntries: () => mockData([]),
-  addEntry: (_, entry) => mockData({ id: Date.now().toString(), ...entry }),
-  deleteEntry: () => mockData(null),
-  getSavingsGoal: () => mockData({ target: 10000, saved: 500 }),
-  upsertSavingsGoal: (_, data) => mockData(data),
-};
-
-export const wellnessAPI = {
-  getToday: () => mockData({ water: 0, sleep: 0, steps: 0, mood: 2 }),
-  upsertToday: (_, data) => mockData(data),
-};
-
-export const journalAPI = {
-  getAll: () => mockData([]),
-  add: (_, entry) => mockData({ id: Date.now().toString(), ...entry }),
-  update: (id, data) => mockData({ id, ...data }),
-  delete: () => mockData(null),
-};
-
+// Calendar (Events)
 export const calendarAPI = {
-  getAll: () => mockData([]),
-  add: (_, event) => mockData({ id: Date.now().toString(), ...event }),
-  delete: () => mockData(null),
+  getAll: async (uid) => IS_MOCK ? mockData([]) : supabase.from('calendar_events').select('*').eq('user_id', uid).order('event_date', { ascending: true }),
+  add: async (uid, event) => IS_MOCK ? mockData({ id: Date.now().toString(), ...event }) : supabase.from('calendar_events').insert([{ ...event, user_id: uid }]).select().single(),
+  delete: async (id) => IS_MOCK ? mockData(null) : supabase.from('calendar_events').delete().eq('id', id),
 };
-
-export const pomodoroAPI = {
-  getHistory: () => mockData([]),
-  logSession: (_, workMinutes) => mockData({ id: Date.now().toString(), work_minutes: workMinutes }),
-};
-
-
