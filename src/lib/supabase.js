@@ -46,7 +46,7 @@ export const authAPI = supabase.auth;
 // Profile
 export const profileAPI = {
   get: async (uid) => IS_MOCK ? mockData({ full_name: 'Eswar Reddy', career_goal: 'Cybersecurity Expert', location: 'India', dark_mode: true, avatar_url: '', logo_url: '' }) : supabase.from('profiles').select('*').eq('id', uid).single(),
-  update: async (uid, data) => IS_MOCK ? mockData(data) : supabase.from('profiles').update(data).eq('id', uid).select().single(),
+  update: async (uid, data) => IS_MOCK ? mockData(data) : supabase.from('profiles').upsert({ id: uid, ...data }).select().single(),
 };
 
 // Tasks
