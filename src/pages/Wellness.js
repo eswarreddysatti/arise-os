@@ -47,14 +47,14 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
 
     if (isTracking) {
       window.addEventListener('devicemotion', handleMotion);
-      if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
         DeviceMotionEvent.requestPermission();
       }
     }
     return () => window.removeEventListener('devicemotion', handleMotion);
   }, [isTracking, updateWellness]);
 
-  const updateWellness = async (updates) => {
+  const updateWellness = useCallback(async (updates) => {
     if (!userId) return;
     const { data, error } = await wellnessAPI.update(userId, today, updates);
     if (!error && data) {
@@ -63,7 +63,7 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
     } else {
       onToast("Sync error");
     }
-  };
+  }, [userId, today, setWellness, onToast]);
 
   const saveSetup = async () => {
     if (!userId) return;
@@ -85,6 +85,8 @@ export const WellnessPage = ({ t, sh, wellness = {}, setWellness, profile, setPr
     if (!wellness.sleep_start || !wellness.sleep_wake) return "0h 0m";
     const start = new Date(wellness.sleep_start);
     const wake = new Date(wellness.sleep_wake);
+    
+    if (isNaN(start.getTime()) || isNaN(wake.getTime())) return "0h 0m";
     
     // Create new dates with fixed current day to compare times only
     const s = new Date(2000, 0, 1, start.getHours(), start.getMinutes());

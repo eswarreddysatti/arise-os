@@ -68,7 +68,7 @@ export const ActionBtn = ({ children, onClick, t, sh, secondary = false, style =
 
 export const Segment = ({ label, value, unit, t }) => (
   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-    <SectionLabel t={t}>{label}</ SectionLabel>
+    <SectionLabel t={t}>{label}</SectionLabel>
     <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
       <BigNumber t={t}>{value}</BigNumber>
       {unit && <span style={{ fontSize: 14, fontWeight: 700, color: t.grey, textTransform: "uppercase" }}>{unit}</span>}
