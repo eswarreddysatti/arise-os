@@ -4,11 +4,12 @@ import { Card, BigNumber } from '../components/SharedUI';
 
 export const MorePage = ({ setPage, t, sh }) => {
   const extras = [
+    { id: "glowup", icon: "glow", label: "Glow-Up", desc: "Wedding transformation" },
     { id: "notes", icon: "notes", label: "Notes", desc: "Quick capture" },
     { id: "pomodoro", icon: "timer", label: "Pomodoro", desc: "Focus timer" },
     { id: "finance", icon: "finance", label: "Finance", desc: "Money tracker" },
     { id: "wellness", icon: "wellness", label: "Wellness", desc: "Health dashboard" },
-    { id: "journal", icon: "journal", label: "Journal", desc: "Daily reflections" },
+    { id: "journal", icon: "journal", label: "Daily reflections" },
     { id: "goals", icon: "goal", label: "Goals", desc: "Track targets" },
     { id: "reminders", icon: "bell", label: "Reminders", desc: "Alerts & nudges" },
     { id: "profile", icon: "profile", label: "Profile", desc: "You & settings" },

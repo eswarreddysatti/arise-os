@@ -28,6 +28,7 @@ import { FinancePage } from "./pages/Finance";
 import { WellnessPage } from "./pages/Wellness";
 import { JournalPage } from "./pages/Journal";
 import { GoalsPage } from "./pages/Goals";
+import { GlowUpPage } from "./pages/GlowUp";
 
 const POMO_LS_KEY = 'arise_pomo_v3';
 const DEFAULT_POMO = {
@@ -195,6 +196,7 @@ export default function App() {
     goals: <GoalsPage     {...shared} goals={goals} setGoals={setGoals} />,
     reminders: <RemindersPage {...shared} reminders={reminders} setReminders={setReminders} />,
     profile: <ProfilePage   {...shared} darkMode={darkMode} toggleDark={toggleDark} profile={profile} setProfile={setProfile} tasks={tasks} habits={habits} notes={notes} />,
+    glowup: <GlowUpPage {...shared} />,
   };
 
   return (
